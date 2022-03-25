@@ -54,7 +54,7 @@ ax[0].set_title('Density and Mach number of Shock')
 
 
 ax[0].set_xlim([0, dx*N_list+1])
-ax[0].set_ylim([0, 4.5])
+ax[0].set_ylim([0, 5])
 ax[0].plot(x, np.ones(N_list)*4, 'k-.')
 ax[0].legend(['Density Expectation'])
 ax[1].set_xlim([0, dx*N_list+1])

@@ -22,19 +22,17 @@ m3 = np.ones(N_list)
 x = np.arange(N_list) * dx  
 u = np.zeros(N_list+1)     
 
-pres = np.zeros(N_list)
+pressure = np.zeros(N_list)
 sound_sp = np.zeros(N_list)
 
 Amp, sigma = 10000, N_list/12
 m3 = m3 + Amp * np.exp(-(x - x.max()/2) ** 2 / sigma ** 2)
 
 def advection(f, u, dt, dx):
-    # calculating flux terms
-    J = np.zeros(len(f)+1) # keeping the first and the last term zero
+    J = np.zeros(len(f)+1)
     J[1:-1] = np.where(u[1:-1] > 0, f[:-1] * u[1:-1], f[1:] * u[1:-1])
-    f = f - (dt / dx) * (J[1:] - J[:-1]) # update
+    f = f - (dt / dx) * (J[1:] - J[:-1]) 
     return f
-
 
 plt.ion()
 fig, ax = plt.subplots(2,1)
@@ -68,48 +66,49 @@ ax[1].set_ylim([0, 10])
 fig.canvas.draw()
 
 for ct in range(StepCount):
-    # advection velocity at the cell interface
+    
+    # Velocity Advection
     u[1:-1] = 0.5 * ((m2[:-1] / m1[:-1]) + (m2[1:] / m1[1:]))
 
-    # update density, momentum and total energy
+    # Density Momentum Energy Update
     m1 = advection(m1, u, dt, dx)
     m2 = advection(m2, u, dt, dx)
 
-    # update pressure
-    pres = (2/5)*(m3 - ((m2**2)/(2*m1)))
+    # Pressure Update
+    pressure = (2/5)*(m3 - ((m2**2)/(2*m1)))
     
-    # add the source term for Euler equation
-    m2[1:-1] = m2[1:-1] - 0.5 * (dt / dx) * (pres[2:] - pres[:-2])
+    # Euler Equation
+    m2[1:-1] = m2[1:-1] - 0.5 * (dt / dx) * (pressure[2:] - pressure[:-2])
 
-    # correct for source term at the boundary (reflective)
-    m2[0] = m2[0] - 0.5 * (dt / dx) * (pres[1] - pres[0])
-    m2[-1] = m2[-1] - 0.5 * (dt / dx) * (pres[-1] - pres[-2])
+    # Reflective Boundary
+    m2[0] = m2[0] - 0.5 * (dt / dx) * (pressure[1] - pressure[0])
+    m2[-1] = m2[-1] - 0.5 * (dt / dx) * (pressure[-1] - pressure[-2])
 
-    # advection velocity at the cell interface again
+    # Vel Advection
     u[1:-1] = 0.5 * ((m2[:-1] / m1[:-1]) + (m2[1:] / m1[1:]))
     
-    # advect energy
+    # Energy Advection
     m3 = advection(m3, u, dt, dx)
     
-    # pressure again
-    pres = (2/5)*(m3 - ((m2**2)/(2*m1)))
+    # Pressure Update
+    pressure = (2/5)*(m3 - ((m2**2)/(2*m1)))
     
-    # add source term for energy equation
-    m3[1:-1] = m3[1:-1] - 0.5 * (dt / dx) * ((m2[2:]/m1[2:])*pres[2:] - (m2[:-2]/m1[:-2])*pres[:-2])
+    # Energy
+    m3[1:-1] = m3[1:-1] - 0.5 * (dt / dx) * ((m2[2:]/m1[2:])*pressure[2:] - (m2[:-2]/m1[:-2])*pressure[:-2])
     
-    # correct for source term at the boundary (reflective)
-    m3[0] = m3[0] - 0.5 * (dt / dx) * ((m2[1]/m1[1])*pres[1] - (m2[0]/m1[0])*pres[0])
-    m3[-1] = m3[-1] - 0.5 * (dt / dx) * ((m2[-1]/m1[-1])*pres[-1] - (m2[-2]/m1[-2])*pres[-2])
+    # Reflective Boundary
+    m3[0] = m3[0] - 0.5 * (dt / dx) * ((m2[1]/m1[1])*pressure[1] - (m2[0]/m1[0])*pressure[0])
+    m3[-1] = m3[-1] - 0.5 * (dt / dx) * ((m2[-1]/m1[-1])*pressure[-1] - (m2[-2]/m1[-2])*pressure[-2])
     
-    # Update pressure and sound speed
-    pres = (2/5)*(m3 - ((m2**2)/(2*m1)))
-    sound_sp = np.sqrt((5/3)*(pres/m1))
+    # Pressure and Sound Update
+    pressure = (2/5)*(m3 - ((m2**2)/(2*m1)))
+    sound_sp = np.sqrt((5/3)*(pressure/m1))
     
     if ct == 250:
         special_density = m1
         special_velocity = m2/m1
     
-    # update the plot
+    # Plot Update
     x1.set_ydata(m1)
     x2.set_ydata(np.abs(m2)/sound_sp)
     fig.canvas.draw()
